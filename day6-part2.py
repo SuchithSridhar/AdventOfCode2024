@@ -92,6 +92,12 @@ loops = 0
 print("ways to try: ", len(array) * len(array[0]))
 print("rows to try: ", len(array))
 
+# TODO: This explores all positions but really the only positions
+# we should consider placing an obsticle is the positions on the current
+# path, and then we can actually continue the path from that point to see
+# if we cause a loop, that is, we don't need to run the entire sequence again.
+# Right now it takes 36 seconds to finish this loop but I susupect if the path
+# based optimizations are implemented, it should be way faster.
 for r in range(len(array)):
     for c in range(len(array[r])):
         if (array[r][c] == OBSTRUCTION) or (r == guard_x and c == guard_y):
