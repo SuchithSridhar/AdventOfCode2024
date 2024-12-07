@@ -1,5 +1,16 @@
 import sys
 
+# This original implementation takes 36s to find all the different positions.
+# The newer implementation only checks positions on the path, runs in 5s.
+"""
+$ time python day6-part2.py input/day6-input.txt
+1309
+34.23s user 0.00s system 99% cpu 34.310 total
+
+$ time python day6-part2-improved.py input/day6-input.txt
+1309
+5.71s user 0.02s system 99% cpu 5.739 total
+"""
 
 with open(sys.argv[1]) as f:
     data = f.read()
@@ -89,15 +100,6 @@ def count_guard_steps(array, guard_x, guard_y):
 
 loops = 0
 
-print("ways to try: ", len(array) * len(array[0]))
-print("rows to try: ", len(array))
-
-# TODO: This explores all positions but really the only positions
-# we should consider placing an obsticle is the positions on the current
-# path, and then we can actually continue the path from that point to see
-# if we cause a loop, that is, we don't need to run the entire sequence again.
-# Right now it takes 36 seconds to finish this loop but I susupect if the path
-# based optimizations are implemented, it should be way faster.
 for r in range(len(array)):
     for c in range(len(array[r])):
         if (array[r][c] == OBSTRUCTION) or (r == guard_x and c == guard_y):
@@ -111,6 +113,5 @@ for r in range(len(array)):
 
         if steps == INF:
             loops += 1
-    print(f"Completed row {r}: {loops}")
 
 print(loops)
