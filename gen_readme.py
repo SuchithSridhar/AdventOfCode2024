@@ -12,32 +12,55 @@ MARKDOWN_END = "<!-- END AOC TIMINGS -->"
 
 
 # Function to time a script
-def time_script(filepath, input_file, runs=3):
+def time_script(filepath, input_file, runs=10):
     times = []
-    for _ in range(runs):
-        start_time = time.time()
+    print(f"Timing {filepath} with input {input_file}: ", end="", flush=True)
+    binary = None
+
+    # For C programs, compile first (but don't include this time in the timing)
+    if filepath.endswith(".c"):
+        binary = filepath.replace(".c", ".out")
+        try:
+            subprocess.run(["gcc", filepath, "-O2", "-o", binary], check=True)
+        except Exception as e:
+            print(f"\nCompilation Error: {e}")
+            return f"Error: {e}"
+
+    for i in range(runs):
+        start_time = None
+        end_time = None
         try:
             if filepath.endswith(".py"):
+                # Time Python script execution
+                start_time = time.time()
                 subprocess.run(
                     ["python", filepath, input_file],
                     check=True,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
+                end_time = time.time() - start_time
             elif filepath.endswith(".c"):
-                # Compile and run C files
-                binary = filepath.replace(".c", ".out")
-                subprocess.run(["gcc", filepath, "-o", binary], check=True)
+                # Time only the execution of the compiled binary
+                start_time = time.time()
                 subprocess.run(
                     [f"./{binary}", input_file],
                     check=True,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
-                os.remove(binary)  # Clean up compiled binary
+                end_time = time.time() - start_time
         except Exception as e:
+            print(f"\nError: {e}")
             return f"Error: {e}"
-        times.append(time.time() - start_time)
+        times.append(end_time)
+        # Print progress indicator
+        print("." if i < runs - 1 else "*", end="", flush=True)
+
+    if binary and os.path.exists(binary):
+        os.remove(binary)  # Clean up the compiled binary
+
+    print()  # Newline after progress indicators
     return {"best": min(times), "worst": max(times), "average": sum(times) / len(times)}
 
 
