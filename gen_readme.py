@@ -137,10 +137,16 @@ def main(folder=".", input_folder="input"):
     # Generate markdown table
     table = "| Day | Part | File                | Best Time (s) | Worst Time (s) | Average Time (s) |\n"
     table += "|-----|------|---------------------|---------------|----------------|------------------|\n"
+
+    last_day = None  # Keep track of the previous day for adding a separator
     for entry in sorted(
         new_data.values(),
         key=lambda x: (int(x["Day"]), x["Part"], (len(x["File"]), x["File"])),
     ):
+        if entry["Day"] != last_day:
+            if last_day is not None:  # Add a blank line before a new day
+                table += "| **---** | **---** | **---------------------** | **---------------** | **----------------** | **------------------** |\n"
+            last_day = entry["Day"]
         table += f"| {entry['Day']}   | {entry['Part']}  | {entry['File']:<19} | {entry['Best']:<13} | {entry['Worst']:<14} | {entry['Average']:<16} |\n"
 
     # Load markdown sections and update README
