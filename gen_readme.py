@@ -128,6 +128,8 @@ def main(folder=".", input_folder="input"):
     existing_data = load_csv(CSV_FILE)
     new_data = existing_data.copy()
 
+    print(f"Found {len(problem_data)} problems to process.\n")
+
     # Time new or missing scripts
     for problem, scripts in problem_data.items():
         match = re.match(r"Day (\d+) part(\d+)", problem)
@@ -143,6 +145,7 @@ def main(folder=".", input_folder="input"):
 
         for script, script_day in scripts:
             if script not in existing_data:
+                print(f"Processing {script} (Day {day}, Part {part})...")
                 times = time_script(script, input_file)
                 if isinstance(times, dict):  # Ensure no errors occurred
                     new_data[script] = {
@@ -157,24 +160,28 @@ def main(folder=".", input_folder="input"):
     # Save updated times to CSV
     save_csv(new_data, CSV_FILE)
 
-    # Generate markdown table
-    table = "| Day | Part | File                | Best Time (s) | Worst Time (s) | Average Time (s) |\n"
-    table += "|-----|------|---------------------|---------------|----------------|------------------|\n"
+    # Generate markdown with separate tables for each day
+    markdown_content = ""
+    last_day = None  # Keep track of the previous day
 
-    last_day = None  # Keep track of the previous day for adding a separator
     for entry in sorted(
         new_data.values(),
         key=lambda x: (int(x["Day"]), x["Part"], (len(x["File"]), x["File"])),
     ):
         if entry["Day"] != last_day:
-            if last_day is not None:  # Add a blank line before a new day
-                table += "|||||||\n"
+            if last_day is not None:
+                markdown_content += "\n"  # Separate days with a blank line
+            markdown_content += f"### Day {entry['Day']}\n"
+            markdown_content += "| Part | File                | Best Time (s) | Worst Time (s) | Average Time (s) |\n"
+            markdown_content += "|------|---------------------|---------------|----------------|------------------|\n"
             last_day = entry["Day"]
-        table += f"| {entry['Day']}   | {entry['Part']}  | {entry['File']:<19} | {entry['Best']:<13} | {entry['Worst']:<14} | {entry['Average']:<16} |\n"
+
+        markdown_content += f"| {entry['Part']}  | {entry['File']:<19} | {entry['Best']:<13} | {entry['Worst']:<14} | {entry['Average']:<16} |\n"
 
     # Load markdown sections and update README
     before, after = load_markdown()
-    save_markdown(before, table, after)
+    save_markdown(before, markdown_content, after)
+    print("\nProcessing complete. README.md updated!")
 
 
 if __name__ == "__main__":
