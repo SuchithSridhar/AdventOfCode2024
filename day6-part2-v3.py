@@ -61,19 +61,29 @@ class Grid:
     def next_pos(self, r, c, dir) -> tuple[int, int, int]:
         if DIRECTIONS[dir] == DOWN:
             obs_idx = bisect.bisect_left(self.col_obs[c], r)
-            return self.col_obs[c][obs_idx], c, (dir + 1) % 4
+            return self.col_obs[c][obs_idx] - 1, c, (dir + 1) % 4
         elif DIRECTIONS[dir] == UP:
             obs_idx = bisect.bisect_left(self.col_obs[c], r) - 1
-            return self.col_obs[c][obs_idx], c, (dir + 1) % 4
+            return self.col_obs[c][obs_idx] + 1, c, (dir + 1) % 4
         elif DIRECTIONS[dir] == RIGHT:
             obs_idx = bisect.bisect_left(self.row_obs[r], c)
-            return r, self.row_obs[r][obs_idx], (dir + 1) % 4
+            return r, self.row_obs[r][obs_idx] - 1, (dir + 1) % 4
         else:
             obs_idx = bisect.bisect_left(self.row_obs[r], c) - 1
-            return r, self.row_obs[r][obs_idx], (dir + 1) % 4
+            return r, self.row_obs[r][obs_idx] + 1, (dir + 1) % 4
+
+    def insert_obs(self, r, c):
+        idx_r = bisect.bisect_left(self.row_obs[r], c)
+        idx_c = bisect.bisect_left(self.col_obs[c], r)
+        self.row_obs[r].insert(idx_r, c)
+        self.col_obs[c].insert(idx_c, r)
+        return idx_r, idx_c
+
+    def remove_obs(self, r, c, idx_r, idx_c):
+        self.row_obs[r].pop(idx_r)
+        self.col_obs[c].pop(idx_c)
 
     def get_path(self):
-
         pos = self.guard
         dir = self.dir
 
@@ -92,35 +102,30 @@ class Grid:
                 continue
 
             pos = (nr, nc)
-            if (pos[0] * self.cols + pos[1]) not in path_set:
-                path_set.add(pos[0] * self.cols + pos[1])
+            if (nr * self.cols + nc) not in path_set:
+                path_set.add(nr * self.cols + nc)
                 path_list.append(self.encode(nr, nc, dir))
 
         return path_list
 
-    def is_loop(self, guard_pos, guard_dir):
+    def is_loop(self, gr, gc, gd):
+
         state_set: set[int] = set()
-        pos = guard_pos
-        dir = guard_dir
-        state_set.add(self.encode(pos[0], pos[1], dir))
+        pr, pc, pd = gr, gc, gd
+        state_set.add(self.encode(pr, pc, pd))
 
         while True:
-            nr = pos[0] + DIRECTIONS[dir][0]
-            nc = pos[1] + DIRECTIONS[dir][1]
+            nr, nc, nd = self.next_pos(pr, pc, pd)
 
-            if nr < 0 or nr >= self.rows or nc < 0 or nc >= self.cols:
+            if nr <= 0 or nr >= self.rows - 1 or nc <= 0 or nc >= self.cols - 1:
                 break
 
-            if self.grid[nr][nc] == OBSTR:
-                dir = (dir + 1) % DIR_COUNT
-                continue
-
-            if self.encode(nr, nc, dir) in state_set:
+            if self.encode(nr, nc, nd) in state_set:
                 # this indicates that we hit a loop!
                 return True
 
-            pos = (nr, nc)
-            state_set.add(self.encode(nr, nc, dir))
+            pr, pc, pd = nr, nc, nd
+            state_set.add(self.encode(pr, pc, pd))
 
         return False
 
@@ -133,13 +138,16 @@ def main():
     grid = Grid(data)
     path = grid.get_path()
     count = 0
-    for i in range(len(path) - 1, 0, -1):
-        r1, c1, _ = grid.decode(path[i])
-        gr, gc, dir = grid.decode(path[i - 1])
 
-        grid.grid[r1][c1] = OBSTR
-        loop = grid.is_loop((gr, gc), dir)
-        grid.grid[r1][c1] = EMPTY
+    for i in range(len(path) - 1, 0, -1):
+        r, c, _ = grid.decode(path[i])
+        gr, gc, gd = grid.decode(path[i - 1])
+
+        idx_r, idx_c = grid.insert_obs(r, c)
+        grid.grid[r][c] = OBSTR
+        loop = grid.is_loop(gr, gc, gd)
+        grid.grid[r][c] = EMPTY
+        grid.remove_obs(r, c, idx_r, idx_c)
 
         if loop:
             count += 1

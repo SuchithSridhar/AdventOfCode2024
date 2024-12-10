@@ -39,7 +39,8 @@ The following are the recorded time for a 10-run best, worst, and average.
 |------|---------------------|---------------|----------------|------------------|
 | part1  | day6-part1.py       | 0.017244      | 0.025562       | 0.019611         |
 | part2  | day6-part2.py       | 36.998106     | 39.083888      | 37.943375        |
-| part2  | day6-part2-improved.py | 5.65879       | 5.963857       | 5.839924         |
+| part2  | day6-part2-v2.py    | 5.678306      | 9.93441        | 6.137422         |
+| part2  | day6-part2-v3.py    | 0.099981      | 0.103681       | 0.101144         |
 
 ### Day 7
 | Part | File                | Best Time (s) | Worst Time (s) | Average Time (s) |

@@ -5,7 +5,6 @@ Day,Part,File,Best,Worst,Average
 1,part2,day1-part2.py,0.015125,0.018349,0.016639
 5,part1,day5-part1.py,0.016258,0.021477,0.017569
 5,part1,day5-part1.c,0.000727,0.001661,0.001151
-6,part2,day6-part2-improved.py,5.65879,5.963857,5.839924
 6,part2,day6-part2.py,36.998106,39.083888,37.943375
 7,part2,day7-part2.py,3.68892,3.903134,3.835197
 4,part2,day4-part2.py,0.021005,0.024858,0.022433
@@ -19,3 +18,5 @@ Day,Part,File,Best,Worst,Average
 3,part1,day3-part1.py,0.019471,0.027279,0.022029
 7,part1,day7-part1.py,0.123909,0.1345,0.128762
 3,part2,day3-part2.py,0.019614,0.024019,0.021244
+6,part2,day6-part2-v2.py,5.678306,9.93441,6.137422
+6,part2,day6-part2-v3.py,0.099981,0.103681,0.101144
