@@ -65,4 +65,10 @@ The following are the recorded time for a 10-run best, worst, and average.
 |------|---------------------|---------------|----------------|------------------|
 | part1  | day10-part1.py      | 0.03398       | 0.038987       | 0.035776         |
 | part2  | day10-part2.py      | 0.033145      | 0.041106       | 0.035139         |
+
+### Day 11
+| Part | File                | Best Time (s) | Worst Time (s) | Average Time (s) |
+|------|---------------------|---------------|----------------|------------------|
+| part1  | day11-part1.py      | 0.327947      | 0.331327       | 0.329884         |
+| part2  | day11-part2.py      | 0.249002      | 0.305886       | 0.278483         |
 <!-- END AOC TIMINGS -->
