@@ -1,5 +1,4 @@
 import sys
-from collections import deque
 
 """
 Part 2 Change:
@@ -17,6 +16,7 @@ class Grid:
         self.rows = len(lines)
         self.cols = len(lines[0])
         self.grid = list(map(list, lines))
+        self.sides_set = set()
 
     def tally_cost(self, r, c):
         char_upper = self.grid[r][c]
@@ -24,85 +24,105 @@ class Grid:
 
         assert char_upper != char_lower
 
-        a, s = self._apr(r, c, char_upper, char_lower)
+        self.sides_set = set()
+        self.chu = char_upper
+        self.chl = char_lower
+        self.chr = (self.chu, self.chl)
+
+        a, s = self._apr(r, c)
         return a * s
 
-    def find_edge(self, r, c, dr, dc, chu, chl):
-        edge_set = {(r, c, dr, dc)}
+    def is_edge(self, r, c, dr, dc):
+        nr, nc = r + dr, c + dc
+        return (
+            nr < 0
+            or nr >= self.rows
+            or nc < 0
+            or nc >= self.cols
+            or self.grid[nr][nc] not in self.chr
+        )
+
+    def explore_side(self, r, c, dr, dc):
+        self.sides_set.add((r, c, dr, dc))
+
+        # 0 <= nr < self.rows
+        # and 0 <= nc < self.cols
+        # and self.grid[nr][nc] in (chu, chl)
+
         if dr == 0:
-            # vertical edge
+            # vertical side
+            # look one spot up
+            nr, nc = r - 1, c
+            if (
+                0 <= nr
+                and self.grid[nr][nc] in self.chr
+                and (nr, nc, dr, dc) not in self.sides_set
+                and self.is_edge(nr, nc, dr, dc)
+            ):
+                self.explore_side(nr, nc, dr, dc)
 
-            # going upward
-            rup = r - 1
-            while rup >= 0 and self.grid[rup][c] in (chu, chl):
-                edge_set.add((rup, c, dr, dc))
-                rup -= 1
+            # look down
+            nr, nc = r + 1, c
+            if (
+                nr < self.rows
+                and self.grid[nr][nc] in self.chr
+                and (nr, nc, dr, dc) not in self.sides_set
+                and self.is_edge(nr, nc, dr, dc)
+            ):
+                self.explore_side(nr, nc, dr, dc)
 
-            # goind downward
-            rdw = r + 1
-            while rdw < self.rows and self.grid[rdw][c] in (chu, chl):
-                edge_set.add((rdw, c, dr, dc))
-                rdw += 1
+        if dc == 0:
+            # horizontal side
+            # look one spot left
+            nr, nc = r, c - 1
+            if (
+                0 <= nc
+                and self.grid[nr][nc] in self.chr
+                and (nr, nc, dr, dc) not in self.sides_set
+                and self.is_edge(nr, nc, dr, dc)
+            ):
+                self.explore_side(nr, nc, dr, dc)
 
-        else:
-            # horizontal edge
-            assert dc == 0
+            # look down
+            nr, nc = r, c + 1
+            if (
+                nc < self.rows
+                and self.grid[nr][nc] in self.chr
+                and (nr, nc, dr, dc) not in self.sides_set
+                and self.is_edge(nr, nc, dr, dc)
+            ):
+                self.explore_side(nr, nc, dr, dc)
 
-            # going left
-            cup = c - 1
-            while cup >= 0 and self.grid[r][cup] in (chu, chl):
-                edge_set.add((r, cup, dr, dc))
-                cup -= 1
-
-            # goind right
-            cdw = c + 1
-            while cdw < self.cols and self.grid[r][cdw] in (chu, chl):
-                edge_set.add((r, cdw, dr, dc))
-                cdw += 1
-
-        return edge_set
-
-    def is_side_counted(self, r, c, dr, dc, counted_sides):
-        return (r, c, dr, dc) in counted_sides
-
-    def _apr(self, r: int, c: int, chu: str, chl: str) -> tuple[int, int]:
-        area = 0
+    def _apr(self, r: int, c: int) -> tuple[int, int]:
+        area = 1
         sides = 0
-        queue = deque([(r, c)])
+
+        assert self.grid[r][c] == self.chu
+        self.grid[r][c] = self.chl
+
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
-        assert self.grid[r][c] == chu
-
-        # (r, c, dr, dr)
-        counted_sides = set()
-
-        while queue:
-            cr, cc = queue.popleft()
-
-            if self.grid[cr][cc] == chl:
+        for dr, dc in directions:
+            nr, nc = r + dr, c + dc
+            if nr >= self.rows or nr < 0 or nc >= self.cols or nc < 0:
+                if (r, c, dr, dc) not in self.sides_set:
+                    sides += 1
+                    self.explore_side(r, c, dr, dc)
                 continue
 
-            self.grid[cr][cc] = chl
-            area += 1
+            if self.grid[nr][nc] == self.chl:
+                # already processed this cell, just continue
+                continue
 
-            for dr, dc in directions:
-                nr, nc = cr + dr, cc + dc
+            if self.grid[nr][nc] == self.chu:
+                a, s = self._apr(nr, nc)
+                area, sides = area + a, sides + s
+                continue
 
-                if nr >= self.rows or nr < 0 or nc >= self.cols or nc < 0:
-                    if not self.is_side_counted(cr, cc, dr, dc, counted_sides):
-                        counted_sides.update(self.find_edge(cr, cc, dr, dc, chu, chl))
-                        sides += 1
-                    continue
-
-                if self.grid[nr][nc] == chl:
-                    continue
-
-                if self.grid[nr][nc] == chu:
-                    queue.append((nr, nc))
-
-                if not self.is_side_counted(cr, cc, dr, dc, counted_sides):
-                    counted_sides.update(self.find_edge(cr, cc, dr, dc, chu, chl))
-                    sides += 1
+            assert self.grid[nr][nc] not in self.chr
+            if (r, c, dr, dc) not in self.sides_set:
+                sides += 1
+                self.explore_side(r, c, dr, dc)
 
         return area, sides
 
