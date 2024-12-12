@@ -1,4 +1,5 @@
 import sys
+from collections import deque
 
 """
 Part 2 Change:
@@ -24,7 +25,6 @@ class Grid:
         assert char_upper != char_lower
 
         a, s = self._apr(r, c, char_upper, char_lower)
-        print(f"{char_upper}: a={a} s={s}")
         return a * s
 
     def check_side(self, r, c, ri, ci, chu, chl):
@@ -36,12 +36,12 @@ class Grid:
             and (
                 (
                     (0 <= c - 1)  # left cell is a valid index
-                    and self.grid[r][c - 1] == chl  # this cell has been processed
+                    and self.grid[r][c - 1] == chu  # this cell has been processed
                     and (is_r_edge or self.grid[r + ri][c - 1] not in (chl, chu))
                 )
                 or (
                     (c + 1 < self.cols)  # right cell is valid index
-                    and self.grid[r][c + 1] == chl  # this cell has been processed
+                    and self.grid[r][c + 1] == chu  # this cell has been processed
                     and (is_r_edge or (self.grid[r + ri][c + 1] not in (chl, chu)))
                 )
             )
@@ -50,53 +50,52 @@ class Grid:
             and (
                 (
                     (0 <= r - 1)  # top cell is a valid index
-                    and self.grid[r - 1][c] == chl  # this cell has been processed
+                    and self.grid[r - 1][c] == chu  # this cell has been processed
                     and (is_c_edge or self.grid[r - 1][c + ci] not in (chl, chu))
                 )
                 or (
                     (r + 1 < self.cols)  # bottom cell is valid index
-                    and self.grid[r + 1][c] == chl  # this cell has been processed
+                    and self.grid[r + 1][c] == chu  # this cell has been processed
                     and (is_c_edge or (self.grid[r + 1][c + ci] not in (chl, chu)))
                 )
             )
         )
 
     def _apr(self, r: int, c: int, chu: str, chl: str) -> tuple[int, int]:
-        # area and perimeter recursive
-
-        area = 1
+        area = 0
         sides = 0
+        queue = deque([(r, c)])
+        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
         assert self.grid[r][c] == chu
-        self.grid[r][c] = chl
 
-        directions = [(r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)]
+        while queue:
+            cr, cc = queue.popleft()
 
-        for nr, nc in directions:
-            if nr >= self.rows or nr < 0 or nc >= self.cols or nc < 0:
-                if not self.check_side(r, c, nr - r, nc - c, chu, chl):
-                    print(f"{chu} ({r}, {c}): has side on {nr}, {nc}")
-                    sides += 1
+            if self.grid[cr][cc] == chl:
                 continue
 
-            if self.grid[nr][nc] not in (chu, chl) and not self.check_side(
-                r, c, nr - r, nc - c, chu, chl
-            ):
-                print(f"{chu} ({r}, {c}): has side on {nr}, {nc}")
-                sides += 1
+            self.grid[cr][cc] = chl
+            area += 1
 
-        for nr, nc in directions:
-            if nr >= self.rows or nr < 0 or nc >= self.cols or nc < 0:
-                continue
+            for dr, dc in directions:
+                nr, nc = cr + dr, cc + dc
 
-            if self.grid[nr][nc] == chl:
-                # already processed this cell, just continue
-                continue
+                if nr >= self.rows or nr < 0 or nc >= self.cols or nc < 0:
+                    if not self.check_side(cr, cc, dr, dc, chu, chl):
+                        sides += 1
+                    continue
 
-            if self.grid[nr][nc] == chu:
-                a, s = self._apr(nr, nc, chu, chl)
-                area, sides = area + a, sides + s
-                continue
+                if self.grid[nr][nc] not in (chu, chl):
+                    if not self.check_side(cr, cc, dr, dc, chu, chl):
+                        sides += 1
+                    continue
+
+                if self.grid[nr][nc] == chl:
+                    continue
+
+                if self.grid[nr][nc] == chu:
+                    queue.append((nr, nc))
 
         return area, sides
 
