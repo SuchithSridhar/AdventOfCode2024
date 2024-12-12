@@ -27,39 +27,43 @@ class Grid:
         a, s = self._apr(r, c, char_upper, char_lower)
         return a * s
 
-    def check_side(self, r, c, ri, ci, chu, chl):
-        is_r_edge = r + ri < 0 or r + ri >= self.rows
-        is_c_edge = c + ci < 0 or c + ci >= self.cols
+    def find_edge(self, r, c, dr, dc, chu, chl):
+        edge_set = {(r, c, dr, dc)}
+        if dr == 0:
+            # vertical edge
 
-        return (
-            ci == 0
-            and (
-                (
-                    (0 <= c - 1)  # left cell is a valid index
-                    and self.grid[r][c - 1] == chu  # this cell has been processed
-                    and (is_r_edge or self.grid[r + ri][c - 1] not in (chl, chu))
-                )
-                or (
-                    (c + 1 < self.cols)  # right cell is valid index
-                    and self.grid[r][c + 1] == chu  # this cell has been processed
-                    and (is_r_edge or (self.grid[r + ri][c + 1] not in (chl, chu)))
-                )
-            )
-        ) or (
-            ri == 0
-            and (
-                (
-                    (0 <= r - 1)  # top cell is a valid index
-                    and self.grid[r - 1][c] == chu  # this cell has been processed
-                    and (is_c_edge or self.grid[r - 1][c + ci] not in (chl, chu))
-                )
-                or (
-                    (r + 1 < self.cols)  # bottom cell is valid index
-                    and self.grid[r + 1][c] == chu  # this cell has been processed
-                    and (is_c_edge or (self.grid[r + 1][c + ci] not in (chl, chu)))
-                )
-            )
-        )
+            # going upward
+            rup = r - 1
+            while rup >= 0 and self.grid[rup][c] in (chu, chl):
+                edge_set.add((rup, c, dr, dc))
+                rup -= 1
+
+            # goind downward
+            rdw = r + 1
+            while rdw < self.rows and self.grid[rdw][c] in (chu, chl):
+                edge_set.add((rdw, c, dr, dc))
+                rdw += 1
+
+        else:
+            # horizontal edge
+            assert dc == 0
+
+            # going left
+            cup = c - 1
+            while cup >= 0 and self.grid[r][cup] in (chu, chl):
+                edge_set.add((r, cup, dr, dc))
+                cup -= 1
+
+            # goind right
+            cdw = c + 1
+            while cdw < self.cols and self.grid[r][cdw] in (chu, chl):
+                edge_set.add((r, cdw, dr, dc))
+                cdw += 1
+
+        return edge_set
+
+    def is_side_counted(self, r, c, dr, dc, counted_sides):
+        return (r, c, dr, dc) in counted_sides
 
     def _apr(self, r: int, c: int, chu: str, chl: str) -> tuple[int, int]:
         area = 0
@@ -68,6 +72,9 @@ class Grid:
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
         assert self.grid[r][c] == chu
+
+        # (r, c, dr, dr)
+        counted_sides = set()
 
         while queue:
             cr, cc = queue.popleft()
@@ -82,12 +89,8 @@ class Grid:
                 nr, nc = cr + dr, cc + dc
 
                 if nr >= self.rows or nr < 0 or nc >= self.cols or nc < 0:
-                    if not self.check_side(cr, cc, dr, dc, chu, chl):
-                        sides += 1
-                    continue
-
-                if self.grid[nr][nc] not in (chu, chl):
-                    if not self.check_side(cr, cc, dr, dc, chu, chl):
+                    if not self.is_side_counted(cr, cc, dr, dc, counted_sides):
+                        counted_sides.update(self.find_edge(cr, cc, dr, dc, chu, chl))
                         sides += 1
                     continue
 
@@ -96,6 +99,10 @@ class Grid:
 
                 if self.grid[nr][nc] == chu:
                     queue.append((nr, nc))
+
+                if not self.is_side_counted(cr, cc, dr, dc, counted_sides):
+                    counted_sides.update(self.find_edge(cr, cc, dr, dc, chu, chl))
+                    sides += 1
 
         return area, sides
 
