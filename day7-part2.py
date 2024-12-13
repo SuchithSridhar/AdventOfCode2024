@@ -1,48 +1,39 @@
 import sys
 
-# TODO: The numbers get big and while python can handle
-# big inputs, we want to see if there's a nice clean way to handle it
-# the final answer was: 145149066755184, which requies 43 bits to store.
-# so may be int64 would have been enough.
+
+def trim(required, operand):
+    return int(str(required)[: -len(str(operand))])
 
 
-def conc(lhs, rhs):
-    copy = max(rhs, 1)  # ensure at least one move
-    while copy != 0:
-        lhs *= 10
-        copy //= 10
-
-    return lhs + rhs
+def ends_with(required, operand):
+    return len(str(required)) > len(str(operand)) and str(required).endswith(
+        str(operand)
+    )
 
 
-# This worked but is slow (still instant but recursion)
-# TODO: Try to do this without recursion
-def eq_eval_recur(equation: tuple[int, list[int]]) -> int:
-    result, operands = equation
+def eq_eval(equation):
+    required, operands = equation
+    return required if eq_eval_recur(required, operands) else 0
 
+
+def eq_eval_recur(required, operands) -> bool:
     if len(operands) == 1:
-        if operands[0] == result:
-            return result
-        else:
-            return 0
+        return required == operands[0]
 
-    lhs = operands.pop(0)
-    rhs = operands.pop(0)
-
-    # small optimization
-    if lhs > result or rhs > result:
-        return 0
-
-    conc_value = eq_eval_recur((result, [conc(lhs, rhs)] + operands.copy()))
-    if conc_value != 0:
-        return conc_value
-
-    add_value = eq_eval_recur((result, [lhs + rhs] + operands.copy()))
-    if add_value != 0:
-        return add_value
-
-    mult_value = eq_eval_recur((result, [lhs * rhs] + operands.copy()))
-    return mult_value
+    return (
+        (
+            required % operands[-1] == 0
+            and eq_eval_recur(required // operands[-1], operands[:-1])
+        )
+        or (
+            required > operands[-1]
+            and eq_eval_recur(required - operands[-1], operands[:-1])
+        )
+        or (
+            ends_with(required, operands[-1])
+            and eq_eval_recur(trim(required, operands[-1]), operands[:-1])
+        )
+    )
 
 
 with open(sys.argv[1]) as f:
@@ -52,4 +43,4 @@ data = data.splitlines()
 data = list(map(lambda x: x.split(": "), data))
 data = [(int(r), list(map(int, ops.split(" ")))) for r, ops in data]
 
-print(sum(map(eq_eval_recur, data)))
+print(sum(map(eq_eval, data)))
