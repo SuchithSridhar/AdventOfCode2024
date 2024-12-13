@@ -26,3 +26,5 @@ Day,Part,File,Best,Worst,Average
 11,part1,day11-part1.py,0.327947,0.331327,0.329884
 12,part2,day12-part2.py,0.080268,0.08482,0.081873
 12,part1,day12-part1.py,0.058681,0.060766,0.059893
+13,part1,day13-part1.py,0.041184,0.04477,0.042486
+13,part2,day13-part2.py,0.041156,0.045768,0.042979
