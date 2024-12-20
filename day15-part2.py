@@ -17,10 +17,10 @@ BOX_RIGHT = "]"
 BIG_BOX = BOX_LEFT + BOX_RIGHT
 
 SWITCH_MAP = {
-    WALL: WALL + WALL,
-    BOX: BIG_BOX,
-    EMPTY: EMPTY + EMPTY,
-    ROBOT: ROBOT + EMPTY,
+    WALL: [WALL, WALL],
+    BOX: [BOX_LEFT, BOX_RIGHT],
+    EMPTY: [EMPTY, EMPTY],
+    ROBOT: [ROBOT, EMPTY],
 }
 
 
@@ -33,34 +33,88 @@ def find_robot(grid) -> tuple[int, int]:
 
 
 def build_grid(data: str) -> list[list[str]]:
-    return [[SWITCH_MAP[char] for char in line] for line in data.strip().splitlines()]
+    grid = []
+    for line in data.strip().splitlines():
+        row = []
+        for char in line:
+            row.extend(SWITCH_MAP[char])
+        grid.append(row)
+    return grid
 
 
-def move_box(grid, box, direction) -> bool:
+def move_box_horizontal(grid, box, direction) -> bool:
     dr, dc = direction
     br, bc = box
 
-    if dr == 0:
-        # horizontal move
-        nr, nc = br, bc + 2 * dc  # because box is 2-wide
-        if grid[nr][nc] == EMPTY:  # [].
+    assert dr == 0
+
+    nr, nc = br, bc + 2 * dc  # because box is 2-wide
+    if grid[nr][nc] == EMPTY:  # [].
+        grid[nr][nc] = grid[nr][nc - dc]  # []]
+        grid[nr][nc - dc] = grid[nr][bc]  # [[]
+        grid[br][bc] = EMPTY  # .[]
+        return True
+
+    if grid[nr][nc] == WALL:
+        return False
+
+    if grid[nr][nc] in BIG_BOX:
+        if move_box_horizontal(grid, (nr, nc), direction):
             grid[nr][nc] = grid[nr][nc - dc]  # []]
             grid[nr][nc - dc] = grid[nr][bc]  # [[]
             grid[br][bc] = EMPTY  # .[]
-            return True
-
-        if grid[nr][nc] == WALL:
+        else:
             return False
 
-        if grid[nr][nc] in BIG_BOX:
-            if move_box(grid, (nr, nc), direction):
-                grid[nr][nc] = grid[nr][nc - dc]  # []]
-                grid[nr][nc - dc] = grid[nr][bc]  # [[]
-                grid[br][bc] = EMPTY  # .[]
-            else:
-                return False
+    return True
 
-    return False
+
+def move_box_vertical(grid, box_left, direction) -> bool:
+    dr, dc = direction
+    br, bc = box_left
+
+    assert dc == 0
+
+    can_move = True
+    items = [(br, bc), (br, bc + 1)]  # add box left and box right to list
+    index = 0
+
+    while index < len(items):
+        # look ahead and append to items
+        ir, ic = items[index]
+
+        c = grid[ir + dr][ic]
+        if c == BOX_LEFT:
+            left = (ir + dr, ic)
+            right = (ir + dr, ic + 1)
+            if left not in items:
+                items.append(left)
+            if right not in items:
+                items.append(right)
+
+        elif c == BOX_RIGHT:
+            left = (ir + dr, ic - 1)
+            right = (ir + dr, ic)
+            if left not in items:
+                items.append(left)
+            if right not in items:
+                items.append(right)
+
+        elif c == WALL:
+            can_move = False
+            break
+
+        index += 1
+
+    if not can_move:
+        return False
+
+    # need to move all the boxes
+    for br, bc in reversed(items):
+        grid[br + dr][bc] = grid[br][bc]
+        grid[br][bc] = EMPTY
+
+    return True
 
 
 def move_robot(grid, robot, direction) -> tuple[int, int]:
@@ -78,7 +132,7 @@ def move_robot(grid, robot, direction) -> tuple[int, int]:
 
     if grid[nr][nc] in BIG_BOX and dr == 0:
         # we are moving horizontally
-        possible = move_box(grid, (nr, nc), (dr, dc))
+        possible = move_box_horizontal(grid, (nr, nc), (dr, dc))
         if possible:
             grid[nr][nc] = ROBOT
             grid[rr][rc] = EMPTY
@@ -86,19 +140,22 @@ def move_robot(grid, robot, direction) -> tuple[int, int]:
         else:
             return rr, rc
 
-    if grid[nr][nc] in BIG_BOX and dc == 0:
-        # we are move vertically
-        pass
-    # TODO: Handle vertical box movement.
-    # remember that a single box may push two boxes now.
-    # .....#...
-    # ..[][][].
-    # ...[][]..
-    # ....[]...
-    # becuase of such cases, we can't split them into recursive calls perse.
-    # may be possible if move_box tells you if the move is possible but doesn't
-    # actually move the box. Then if all boxes are moveable, then we have a
-    # different function to move all the boxes.
+    if grid[nr][nc] == BOX_LEFT and dc == 0:
+        possible = move_box_vertical(grid, (nr, nc), (dr, dc))
+        if possible:
+            grid[nr][nc] = ROBOT
+            grid[rr][rc] = EMPTY
+            return nr, nc
+        else:
+            return rr, rc
+    if grid[nr][nc] == BOX_RIGHT and dc == 0:
+        possible = move_box_vertical(grid, (nr, nc - 1), (dr, dc))
+        if possible:
+            grid[nr][nc] = ROBOT
+            grid[rr][rc] = EMPTY
+            return nr, nc
+        else:
+            return rr, rc
 
     return rr, rc
 
@@ -107,7 +164,7 @@ def gps_sum(grid):
     sum = 0
     for r in range(len(grid)):
         for c in range(len(grid[0])):
-            if grid[r][c] == BOX:
+            if grid[r][c] == BOX_LEFT:
                 sum += 100 * r + c
     return sum
 
@@ -125,11 +182,11 @@ def main():
 
     grid, moves = data.split("\n\n")
     moves = moves.replace("\n", "")
-    grid = build_grid(data)
+    grid = build_grid(grid)
 
     robot = find_robot(grid)
 
-    for dir in moves:
+    for i, dir in enumerate(moves):
         robot = move_robot(grid, robot, dir)
 
     # print_grid(grid)
