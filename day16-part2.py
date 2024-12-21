@@ -37,6 +37,16 @@ class Grid:
             self.grid[end_row][end_col] == END_CHAR
         ), "Assumption about ending pointion violated"
 
+    def print_path(self, path):
+        path_set = {(a[0], a[1]) for a in path}
+        for r in range(self.rows):
+            for c in range(self.cols):
+                if (r, c) in path_set:
+                    print("o", end="")
+                else:
+                    print(self.grid[r][c], end="")
+            print()
+
 
 def find_shortest_path(grid):
     # simple implementation of Dijkstra's algorithm
@@ -45,13 +55,13 @@ def find_shortest_path(grid):
     pq: list[tuple[int, int, int, int]] = []
     heapq.heappush(pq, (0, *grid.start))
 
-    distances = {
-        (r, c, d): float("inf")
+    map: dict[tuple[int, int, int], tuple[float, list[object]]] = {
+        (r, c, d): (float("inf"), [None])
         for r in range(grid.rows)
         for c in range(grid.cols)
         for d in range(len(DIRECTIONS))
     }
-    distances[grid.start] = 0
+    map[grid.start] = 0, [None]
 
     visited = set()
 
@@ -75,16 +85,41 @@ def find_shortest_path(grid):
                 continue
 
             dist = cdist + weight
-            if dist < distances[next]:
-                distances[next] = dist
+            if dist == map[next][0]:
+                map[next][1].append(cur)
+
+            elif dist < map[next][0]:
+                map[next] = (dist, [cur])
                 heapq.heappush(pq, (dist, *next))
 
-    return min(
-        distances[(grid.end[0], grid.end[1], NORTH)],
-        distances[(grid.end[0], grid.end[1], SOUTH)],
-        distances[(grid.end[0], grid.end[1], EAST)],
-        distances[(grid.end[0], grid.end[1], WEST)],
+    def get_paths(node):
+        # build paths from start to end
+        if node == grid.start:
+            return [[grid.start]]
+
+        paths = []
+        for prev in map[node][1]:
+            sub_paths = get_paths(prev)
+            for sub_path in sub_paths:
+                paths.append(sub_path + [node])
+
+        return paths
+
+    min_dist = min(
+        map[(grid.end[0], grid.end[1], NORTH)][0],
+        map[(grid.end[0], grid.end[1], SOUTH)][0],
+        map[(grid.end[0], grid.end[1], EAST)][0],
+        map[(grid.end[0], grid.end[1], WEST)][0],
     )
+
+    end_states = set()
+    for dir in [NORTH, SOUTH, EAST, WEST]:
+        end_state = (*grid.end, dir)
+        if map[end_state][0] == min_dist:
+            for path in get_paths(end_state):
+                end_states.update({(a[0], a[1]) for a in path})
+
+    return len(end_states)
 
 
 def main():
