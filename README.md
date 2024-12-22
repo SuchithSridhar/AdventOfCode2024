@@ -151,6 +151,13 @@ Caches (sum of all):
 | part1 | day18-part1.py | 0.041384      | 0.044496       | 0.04251          |
 | part2 | day18-part2.py | 7.355687      | 11.391298      | 7.950896         |
 
+### Day 19
+
+| Part  | File           | Best Time (s) | Worst Time (s) | Average Time (s) |
+| ----- | -------------- | ------------- | -------------- | ---------------- |
+| part1 | day19-part1.py | 0.045324      | 0.048936       | 0.047791         |
+| part2 | day19-part2.py | 0.059563      | 0.06124        | 0.060395         |
+
 <!-- END AOC TIMINGS -->
 
 # TODO List
