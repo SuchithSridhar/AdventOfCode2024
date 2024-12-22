@@ -158,6 +158,14 @@ Caches (sum of all):
 | part1 | day19-part1.py | 0.045324      | 0.048936       | 0.047791         |
 | part2 | day19-part2.py | 0.059563      | 0.06124        | 0.060395         |
 
+### Day 20
+
+| Part  | File              | Best Time (s) | Worst Time (s) | Average Time (s) |
+| ----- | ----------------- | ------------- | -------------- | ---------------- |
+| part1 | day20-part1.py    | 3.268516      | 3.406656       | 3.325054         |
+| part1 | day20-part1-v2.py | 5.164027      | 5.351111       | 5.253468         |
+| part2 | day20-part2.py    | 5.264477      | 5.451977       | 5.321537         |
+
 <!-- END AOC TIMINGS -->
 
 # TODO List
@@ -174,3 +182,8 @@ Caches (sum of all):
 
 - Day 18 part 2 is easily optimizable by keeping track of the path and not
   having to restart from the start each time a memory byte is placed.
+
+- Day 20 I have a $O(n^2)$ soltuion by just looking at point $A$ in the path to
+  point $B$ later in the path. Other people have used a diamond scan around each
+  path point to see if valid cheat. There might be a way to preprocess this so
+  that we can do a diamond scan only on the path elements to make this faster.
