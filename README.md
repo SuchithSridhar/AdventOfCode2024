@@ -144,6 +144,13 @@ Caches (sum of all):
 | part1 | day17-part1.py | 0.04016       | 0.047533       | 0.042533         |
 | part2 | day17-part2.py | 0.035549      | 0.040694       | 0.037251         |
 
+### Day 18
+
+| Part  | File           | Best Time (s) | Worst Time (s) | Average Time (s) |
+| ----- | -------------- | ------------- | -------------- | ---------------- |
+| part1 | day18-part1.py | 0.041384      | 0.044496       | 0.04251          |
+| part2 | day18-part2.py | 7.355687      | 11.391298      | 7.950896         |
+
 <!-- END AOC TIMINGS -->
 
 # TODO List
@@ -157,3 +164,6 @@ Caches (sum of all):
 
 - Day 17 only has the "hardcoded" solution to my input. Need to adapt it to
   general inputs by making a few assumptions.
+
+- Day 18 part 2 is easily optimizable by keeping track of the path and not
+  having to restart from the start each time a memory byte is placed.
