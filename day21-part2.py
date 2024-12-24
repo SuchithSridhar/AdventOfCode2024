@@ -1,6 +1,8 @@
+from collections.abc import Iterable
 import sys
 from collections import deque
 from itertools import product
+from functools import cache
 
 
 class PadSolver:
@@ -47,23 +49,23 @@ class PadSolver:
         return ways
 
 
-def old_solve(keypad: PadSolver, string: str):
-    state = 'A'
-    seqs = [""]
-    for letter in string:
-        ways = keypad.map[state, letter]
-        new = []
-        for way in ways:
-            new.extend([seq + way for seq in seqs])
-        state = letter
-        seqs = new
 
-    return seqs
-
-
-def solve(keypad: PadSolver, string: str):
+def solve(string: str, keypad: PadSolver):
     options = map(lambda pair: keypad.map[pair[0], pair[1]], zip("A" + string, string))
     return map("".join, product(*options))
+
+
+def optimal_length(problems, depth: int, pad: PadSolver):
+    @cache
+    def recur(seq: str, d: int):
+        if d == 1:
+            return min(map(len, solve(seq, pad)))
+        length = 0
+        for x, y in zip("A" + seq, seq):
+            length += min(recur(s, d-1) for s in pad.map[x, y])
+        return length
+
+    return map(lambda seqs: min(map(lambda x: recur(x, depth), seqs)), problems)
 
 
 NUMPAD = [
@@ -85,26 +87,12 @@ def main():
 
     numpad = PadSolver(NUMPAD)
     dirpad = PadSolver(DIRPAD)
+    DEPTH = 25
 
-    arrangement = [numpad, dirpad, dirpad]
     required_nums = data.splitlines()
-
-    sum = 0
-    min_len = 0
-    for string in required_nums:
-        seqs = [string]
-        for bot in arrangement:
-            new = []
-            for seq in seqs:
-                new.extend(solve(bot, seq))
-            min_len = min(map(len, new))
-            seqs = filter(lambda x: len(x) == min_len, new)
-
-        num = int(string[:-1])
-        complx = min_len * num
-        sum += complx
-
-    print(sum)
+    inital_sequences = [solve(x, numpad) for x in required_nums]
+    lengths = optimal_length(inital_sequences, DEPTH, dirpad)
+    print(sum(map(lambda pair: int(pair[0][:-1]) * pair[1], zip(required_nums,lengths))))
 
 
 if __name__ == "__main__":
