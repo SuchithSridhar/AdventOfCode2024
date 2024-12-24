@@ -87,7 +87,7 @@ def main():
 
     numpad = PadSolver(NUMPAD)
     dirpad = PadSolver(DIRPAD)
-    DEPTH = 25
+    DEPTH = 2
 
     required_nums = data.splitlines()
     inital_sequences = [solve(x, numpad) for x in required_nums]
